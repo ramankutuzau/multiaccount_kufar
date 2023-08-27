@@ -3,10 +3,10 @@ import time
 
 from selenium import webdriver
 from selenium.common import TimeoutException
-from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
 
 from parsers import parser_chats
 
@@ -61,11 +61,8 @@ def get_all_chats(driver):
     time.sleep(3)
     # Прокрутите страницу до элемента
     try:
-        wait = WebDriverWait(driver, 10)
-
         # Найти элемент ul внутри styles_menu-conversations-list__n7m8b
-        chats_element = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, ".styles_menu-conversations-list__n7m8b ul"))) # main scroller chat
-
+        chats_element = driver.find_element(By.CSS_SELECTOR, ".styles_menu-conversations-list__n7m8b ul")
 
         # Получаем высоту элемента ul
         ul_height = driver.execute_script("return arguments[0].scrollHeight", chats_element)
@@ -73,13 +70,11 @@ def get_all_chats(driver):
         # Прокручиваем до конца
         while True:
             # Прокручиваем элемент ul
-            script = "arguments[0].scrollTop = arguments[0].scrollHeight"
+            driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", chats_element)
+
             # Подождать некоторое время, чтобы содержимое успело подгрузиться
-            var = wait.until(EC.presence_of_element_located(chats_element)).location_once_scrolled_into_view
-            driver.execute_script(script, element)
-
+            time.sleep(2)
             print('scroll chats for load')
-
             # Получаем новую высоту элемента ul после прокрутки
             new_ul_height = driver.execute_script("return arguments[0].scrollHeight", chats_element)
             # print(f'new ul height {new_ul_height}')
@@ -117,10 +112,10 @@ def main():
     user_agent = UserAgent()
     print(user_agent.random)
     chrome_options = webdriver.ChromeOptions()
-    # chrome_options.page_load_strategy = 'normal'
-    # chrome_options.add_argument('--disable-gpu')
-    # chrome_options.add_argument('--headless')
-    # chrome_options.add_argument(f"--user-agent={user_agent.random}")
+    chrome_options.page_load_strategy = 'normal'
+    chrome_options.add_argument('--disable-gpu')
+    chrome_options.add_argument('--headless')
+    chrome_options.add_argument(f"--user-agent={user_agent.random}")
 
 
     driver = webdriver.Chrome(options=chrome_options)
@@ -133,14 +128,14 @@ def main():
 
     if not os.path.exists("cookies.pickle"):
         print('cookie is not exists')
-        username = "raman.kutuzau@gmail.com"
-        password = "12345Hacintosh09876!"
+        username = ""
+        password = ""
         login(driver=driver,username=username,password=password)
         driver.refresh()
         time.sleep(3)
         save_cookie(driver)
     else:
-        print('cookie is not exists')
+        print('cookie is exists')
         # Если файл cookie есть, загружаем его
         load_cookie(driver)
         print('reload page')
