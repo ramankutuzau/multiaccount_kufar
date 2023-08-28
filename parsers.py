@@ -1,8 +1,8 @@
 from bs4 import BeautifulSoup
 
 
-def parser_chats():
-    with open('chats.html', 'r', encoding='utf-8') as f:
+def parser_chats(username):
+    with open(f'chats/{username}_chats.html', 'r', encoding='utf-8') as f:
         html = f.read()
 
     soup = BeautifulSoup(html, 'html.parser')
