@@ -35,9 +35,10 @@ def parser_chats(username):
         }
         chat_data_list.append(chat_data)
 
+
+    for chat in chat_data_list:
+        print(chat)
     return chat_data_list
 
 
-# parsed_chats = parser_chats()
-# for chat in parsed_chats:
-#     print(chat)
+

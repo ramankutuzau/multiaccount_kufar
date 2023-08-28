@@ -35,6 +35,7 @@ def load_cookie(driver, username):
 
 
 def login(driver, username, password):
+
     try:
         wait = WebDriverWait(driver, 10)
 
@@ -42,14 +43,16 @@ def login(driver, username, password):
         login_input.clear()
         login_input.send_keys(username)
         print(f'{username}: Entered username')
-
+        time.sleep(1)
         password_input = wait.until(EC.presence_of_element_located((By.NAME, "password")))
         password_input.clear()
         password_input.send_keys(password)
         print(f'{username}: Entered password')
+        time.sleep(4)
 
         password_input.send_keys(Keys.ENTER)
         print(f'{username}: Logging in...')
+        time.sleep(2)
 
     except TimeoutException:
         print(f"{username}:Element did not show up")
@@ -121,7 +124,7 @@ def session(username, password):
     #
     accept_cookie(driver, username)
 
-    if not os.path.exists(f"{username}_cookies.pickle"):
+    if not os.path.exists(f"cookies/{username}_cookies.pickle"):
         print(f'{username}: cookie is not exists')
         login(driver=driver, username=username, password=password)
         driver.refresh()
@@ -130,7 +133,7 @@ def session(username, password):
     else:
         print(f'{username}: cookie is exists')
         # Если файл cookie есть, загружаем его
-        load_cookie(drive=driver, username=username)
+        load_cookie(driver=driver, username=username)
         print(f'{username}: reload page')
         driver.get(url)
 
@@ -150,8 +153,7 @@ def session(username, password):
 
 def main():
     accounts = [
-        {"username": "raman.kutuzau@gmail.com", "password": "12345Hacintosh09876!"},
-        {"username": "roman.kutuzov@deltaunion.by", "password": "12345Hacintosh09876!"},
+
         # Добавьте другие аккаунты по мере необходимости
     ]
 
