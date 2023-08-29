@@ -2,6 +2,7 @@ import os
 import threading
 import time
 
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common import TimeoutException
 from selenium.webdriver import Keys
@@ -15,11 +16,16 @@ import pickle
 from fake_useragent import UserAgent
 
 
+
 def accept_cookie(driver, username):
-    accept_button = driver.find_element(By.XPATH, '//button[text()="Принять"]')
-    if accept_button:
-        accept_button.click()
-        print(f"{username}: accept cookie (button)")
+    try:
+        wait = WebDriverWait(driver, 10)
+        accept_button = wait.until(EC.presence_of_element_located((By.XPATH, '//button[text()="Принять"]')))
+        if accept_button:
+            accept_button.click()
+            print(f"{username}: accept cookie (button)")
+    except:
+        pass
 
 
 def save_cookie(driver, username):
@@ -69,6 +75,7 @@ def get_all_chats(driver, username):
         # Найти элемент ul внутри styles_menu-conversations-list__n7m8b
         chats_element = driver.find_element(By.CSS_SELECTOR, ".styles_menu-conversations-list__n7m8b ul")
 
+
         # Получаем высоту элемента ul
         ul_height = driver.execute_script("return arguments[0].scrollHeight", chats_element)
         # print(f'ul height {ul_height}')
@@ -106,6 +113,99 @@ def get_all_chats(driver, username):
     print(f'{username}: chats_save')
 
 
+def send_message(driver,chat_id,message):
+    print('sleep 5 sec')
+    driver.get(f"https://www.kufar.by/account/messaging/{chat_id}")
+    time.sleep(5)
+    textarea = driver.find_element(By.XPATH, '//textarea[@name="message_textarea"]')
+    textarea.clear()
+    textarea.send_keys('!')
+    textarea.send_keys(Keys.ENTER)
+    time.sleep(10)
+    print('отправил сообщение')
+    print('end...')
+
+def get_single_chat(driver,chat_id):
+
+    driver.get(f"https://www.kufar.by/account/messaging/{chat_id}")
+    time.sleep(3)
+    # Прокрутите страницу до элемента
+    try:
+        # Найти элемент ul внутри styles_menu-conversations-list__n7m8b
+        chats_element = driver.find_element(By.CSS_SELECTOR, ".styles_conversation-body__scrollable-content__hgVfD")
+
+
+        soup = BeautifulSoup(chats_element.get_attribute("outerHTML"), 'html.parser')
+
+        message_dict_list = []
+        message_blocks = soup.find_all('div', class_='styles_receiver-bubble__Q6j5A')
+
+
+        # Сохраните содержимое страницы в файл
+
+        with open(f'chats/single-chat/{chat_id}_chats(main).html', 'w', encoding='utf-8') as f:
+            f.write(str(message_blocks))
+
+        # Получаем высоту элемента ul
+        ul_height = driver.execute_script("return arguments[0].scrollHeight", chats_element)
+        # print(f'ul height {ul_height}')
+        # Прокручиваем до конца
+        while True:
+            # Прокручиваем элемент ul вверх
+            driver.execute_script("arguments[0].scrollTop = 0", chats_element)
+
+            # Подождать некоторое время, чтобы содержимое успело подгрузиться
+            time.sleep(2)
+            print('scroll chats for load')
+
+            # Получаем новую высоту элемента ul после прокрутки
+            new_ul_height = driver.execute_script("return arguments[0].scrollHeight", chats_element)
+
+            # Если высота не изменилась, значит мы достигли начала списка
+            if new_ul_height == ul_height:
+                break
+
+            # Обновляем высоту элемента ul
+            ul_height = new_ul_height
+        time.sleep(3)
+
+        # with open(f'chats/single-chat/{chat_id}_chat_mini.html', 'w', encoding='utf-8') as f:
+        #     f.write(str(chats_html))
+
+        ul_height = driver.execute_script("return arguments[0].scrollHeight", chats_element)
+
+
+        while True:
+            # Прокручиваем элемент ul
+            driver.execute_script("arguments[0].scrollTop = arguments[0].scrollHeight", chats_element)
+
+            # Подождать некоторое время, чтобы содержимое успело подгрузиться
+            time.sleep(2)
+            print('scroll chats for load')
+            # Получаем новую высоту элемента ul после прокрутки
+            new_ul_height = driver.execute_script("return arguments[0].scrollHeight", chats_element)
+            # print(f'new ul height {new_ul_height}')
+
+            # Если высота не изменилась, значит мы достигли конца списка
+            if new_ul_height == ul_height:
+                break
+
+            # Обновляем высоту элемента ul
+            ul_height = new_ul_height
+        time.sleep(3)
+    finally:
+        # Закрыть браузер после выполнения
+        pass
+
+    chats = driver.find_element(By.XPATH, '//div[@class="styles_conversation-body__scrollable-content__hgVfD"]')
+    chats_html = chats.get_attribute("outerHTML")
+    # Сохраните содержимое страницы в файл
+
+    with open(f'chats/single-chat/{chat_id}_chat_all.html', 'w', encoding='utf-8') as f:
+        f.write(str(chats_html))
+
+
+
 def session(username, password):
     url = 'https://www.kufar.by/login'
     user_agent = UserAgent()
@@ -137,24 +237,17 @@ def session(username, password):
         print(f'{username}: reload page')
         driver.get(url)
 
-    get_all_chats(driver, username)
+    # get_all_chats(driver, username)
 
-    # print('sleep 5 sec')
-    # driver.get(f"https://www.kufar.by/account/messaging/{chat_id}")
-    # time.sleep(5)
-    # textarea = driver.find_element(By.XPATH,'//textarea[@name="message_textarea"]')
-    # textarea.clear()
-    # textarea.send_keys('!!!')
-    # textarea.send_keys(Keys.ENTER)
-    # time.sleep(10)
-    # print('отправил сообщение')
-    # print('end...')
+    get_single_chat(driver,"aebb4612-1bce-4862-bd58-c2917f2a27a5")
+    # get_single_chat(driver,"5138ba19-de31-464a-b3bd-495df020c295")
 
 
 def main():
     accounts = [
-
-        # Добавьте другие аккаунты по мере необходимости
+        # {"username": "raman.kutuzau@gmail.com", "password": "12345Hacintosh09876!"},
+        # {"username": "roman.kutuzov@deltaunion.by", "password": "12345Hacintosh09876!"},
+        {"username": "satinworm@gmail.com", "password": "qbkMZ45850534"},
     ]
 
     threads = []
